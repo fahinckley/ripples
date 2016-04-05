@@ -45,7 +45,7 @@ dist = 4; % transport distance [bins]
 
 %% Main loop
 figure
-numSteps = 2e5;
+numSteps = 6e4;
 for ii = 1:numSteps
     % Beam source height 
     bHgt = bHgtMin + bHgtRange*rand(1);
@@ -107,10 +107,47 @@ for ii = 1:numSteps
     
 end
 
+%% FFTs
+% Parameters
+Fs = numBins/len;
+T = 1/Fs;
+L = numBins;
+t = (0:L-1)*T;
+
+% FFT of original bins
+Y_0 = fft(binHeight0-mean(binHeight0));
+P2_0 = abs(Y_0/L);
+P1_0 = P2_0(1:L/2+1);
+P1_0(2:end-1) = 2*P1_0(2:end-1);
+xf_0 = Fs*(0:(L/2))/L;
+
+% FFT of final bins
+Y = fft(binHeight-mean(binHeight));
+P2 = abs(Y/L);
+P1 = P2(1:L/2+1);
+P1(2:end-1) = 2*P1(2:end-1);
+xf = Fs*(0:(L/2))/L;
+
 %% Final plots
+% Height differences
 hDiff = binHeight-binHeight0;
 figure
 plot(x,hDiff)
+title('Change in Bed Height')
+xlabel('Position [m]')
+ylabel('\Delta H [m]') 
+
+% FFTs
+figure
+hold on
+plot(xf,P1_0)
+plot(xf,P1)
+xlim([0 50])
+%ylim([0 0.025])
+legend('Original Bed','Final Bed')
+title('FFT of Bed Heights')
+xlabel('f (Hz)')
+ylabel('|P1(f)|') 
 
 %% Checks
 % Conservation of mass
