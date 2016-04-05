@@ -35,13 +35,13 @@ binHeight0 = binHeight;
 % Parameters
 beta = 10; % beam angle [deg]
 bS = tand(beta); % beam slope
-bHgtMin = binHeight(1); % minimum beam source height [m]
+bHgtMin = min(binHeight); % minimum beam source height [m]
 bHgtRange = len*bS; % range of beam source heights [m]
 
 %% Ejected grains
 meanEj = 5; % mean number of ejected grains
 stdEj = 2; % standard deviation for ejected grains
-dist = 50; % transport distance
+dist = 4; % transport distance [bins]
 
 %% Main loop
 figure
@@ -55,19 +55,36 @@ for ii = 1:numSteps
     
     % Beam intersection with bed
     bInt = find(beam < binHeight,1,'first');
+    if isempty(bInt)
+        bInt = numBins;
+    end
     
     % Ejected grains
     numEj = meanEj + stdEj*randn(1);
     
     % Transport distance
-    dTrans = dist;
+    %dTrans = dist;
+    
+    % Parabola for grain trajectory
+    xPara = bInt : 1 : numBins;
+    xPara = [xPara 1:1:bInt-1]; % wrap bins
+    hPara = -D * (xPara - (bInt + 2)).^2 + (binHeight(bInt) + 0.01); % y = (x-h)^2 + k
+    
+    % Find parabola intersections with bed
+    bPara = find(hPara < binHeight(xPara),1,'first');
     
     % Landing bins
-    bLand = bInt + 4;
+    %bLand = bInt + dTrans;
+    bLand = bInt + bPara;
     
     % Check for wrap
     if bLand > numBins
         bLand = bLand - numBins;
+    end
+    
+    % Error trap
+    if isempty(bLand)
+        error('No landing bin')
     end
     
     % Update impacted bin
